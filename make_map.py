@@ -90,7 +90,6 @@ def get_fwhm(filename, center, ref_pixsize=8, ref_mapsize=260):
 
     pixsize = hp.pixel_resolution.to(u.arcsecond).value #steradian to square arcseconds  per pixel
 
-    print(pixsize)
 
     map_arc_s = ref_mapsize * ref_pixsize #map size in arcseconds
     npixside = ceil(map_arc_s / pixsize) #convert to map size in pixels for nu = 353 map.
@@ -110,15 +109,18 @@ def get_fwhm(filename, center, ref_pixsize=8, ref_mapsize=260):
 
     fwhm_pixels = fwhm * 60 / ref_pixsize #to get fwhm in pixels from arcmin since pixsize is arcseconds / pixel
 
+    print(fwhm_pixels)
     fwhm_arcs = fwhm * 60
+
+    print(fwhm_arcs)
 
     bmsigma = fwhm_pixels / sqrt(8 * log(2))
     retext = round(fwhm_arcs * 5.0 / ref_pixsize)
     if retext % 2 == 0:
         retext += 1
 
-    beam = Gaussian2DKernel(bmsigma, x_size=retext,y_size=retext, mode='oversample',factor=1)
-    beam_norm = beam.array / np.max(beam.array)
+    beam = Gaussian2DKernel(bmsigma , x_size=retext,y_size=retext, mode='oversample',factor=1)
+    beam_norm = beam.array / np.sum(beam.array)
 
     calfac  = (pi/180.0)**2 * (1/3600.0)**2 * (pi / (4.0 * log(2.0))) * (1e6)
 
@@ -128,7 +130,7 @@ def get_fwhm(filename, center, ref_pixsize=8, ref_mapsize=260):
     plt.clf()
 
     to_MJy_Sr = 1 / (calfac * fwhm_arcs**2) #calibration factor based off of FWHM of our beam.
-    return beam, to_MJy_Sr
+    return beam_norm, to_MJy_Sr
 
 def read_in_fits(filename, center, ref_pixsize=8, ref_mapsize=260):
 
@@ -143,16 +145,12 @@ def read_in_fits(filename, center, ref_pixsize=8, ref_mapsize=260):
     hp = HEALPix(nside=nside, order=order, frame='icrs')
     #create a pixel grid in terms of the nu=353 grid for GNILC to create our intensity maps
     # sr = hp.pixel_area.to(u.degree)
-    # print(sr)
-
 
     pixsize = hp.pixel_resolution.to(u.arcsecond).value
 
-    print(pixsize)
 
     map_arc_s = ref_mapsize * ref_pixsize #map size in arcseconds
 
-    print(ref_mapsize * ref_pixsize)
     npixside = ceil(map_arc_s / pixsize) #convert to map size in pixels for nu = 353 map.
 
     RA = np.linspace(center[0] - map_arc_s / 3600., center[0] + map_arc_s / 3600., npixside) * u.deg
@@ -166,7 +164,7 @@ def read_in_fits(filename, center, ref_pixsize=8, ref_mapsize=260):
     # ipix = create_field_indexes([292.5, 89.95431463934247], ref_pixsize=8, ref_mapsize=260, nside=2048)
     map = hp.interpolate_bilinear_skycoord(coords, data)
 
-    return map
+    return map, pixsize
 
 def create_a_cut_out(RA, DEC):
     pass
@@ -220,25 +218,25 @@ if __name__ == '__main__':
     filename = [tau_name, temp_name, beta_name]
     param_values = [] #0 = Tau, 1 = Temp, 2 = Emissivity
     for f in filename:
-        data = read_in_fits(f, center, ref_pixsize=8, ref_mapsize=ref_size)
+        data, pixsize = read_in_fits(f, center, ref_pixsize=8, ref_mapsize=ref_size)
         side = int(sqrt(len(data)))
         param_values.append(data)
     nu = 353*1e9 #beta, tau,T, nu
     I = calc_intensity(param_values[2], param_values[0], param_values[1], nu)
     I_map = np.reshape(I, (side, side))
 
-    beam, MJy_conv = get_fwhm(filename, center, ref_pixsize=8, ref_mapsize=ref_size)
+    beam, MJy_conv = get_fwhm(filename, center, ref_pixsize=pixsize, ref_mapsize=ref_size)
 
-    convolved_I_map = convolve(I_map, beam, boundary='wrap')
+    convolved_I_map = convolve(I_map, beam, normalize_kernel=False)
 
     plt.title('Recreated Map')
-    plt.imshow(I_map * MJy_conv)
+    plt.imshow(convolved_I_map * MJy_conv * 1e6)
     plt.colorbar().set_label('$\\frac{MJy}{beam}$')
     plt.savefig('tester_boy.png')
     plt.clf()
 
 
-    data= read_in_fits('COM_CompMap_Dust-GNILC-F353_2048_R2.00.fits', center, ref_pixsize=8, ref_mapsize=ref_size)
+    data, pixsize= read_in_fits('COM_CompMap_Dust-GNILC-F353_2048_R2.00.fits', center, ref_pixsize=8, ref_mapsize=ref_size)
     side = int(sqrt(len(data)))
     map = np.reshape(data, (side, side))
 
