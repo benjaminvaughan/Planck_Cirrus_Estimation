@@ -65,7 +65,7 @@ def read_in_fits(filename, center, ref_head, ref_pixsize=8, ref_mapsize=260):
     hdul.close()
 
     #Galactic Coordinate System
-    hp = HEALPix(nside=nside, order=order, frame='celestial')
+    hp = HEALPix(nside=nside, order=order, frame='galactic')
     #create a pixel grid in terms of the nu=353 grid for GNILC to create our intensity maps
     pixsize = hp.pixel_resolution.to(u.arcsecond).value
 
@@ -90,8 +90,9 @@ def read_in_fits(filename, center, ref_head, ref_pixsize=8, ref_mapsize=260):
 
     # coords = SkyCoord(RA_grid.ravel(), DEC_grid.ravel(), frame='icrs')
     coords = SkyCoord(ra=RA_grid.ravel(), dec=DEC_grid.ravel(), frame='icrs')
+    gal_coords = coords.galactic
 
-    map = hp.interpolate_bilinear_skycoord(coords, data)
+    map = hp.interpolate_bilinear_skycoord(gal_coords, data)
 
     x_side = len(x)
     y_side = len(y)
@@ -112,5 +113,5 @@ def interp_back_to_ref(img, ra, dec, ref_head, ref_shape):
     ref_grid_ra, ref_grid_dec = ref_w.wcs_pix2world(ref_grid_x, ref_grid_y, 0)
 
     #do the interpolation
-    interp_map = griddata(points, data, (ref_grid_ra, ref_grid_dec), method='linear')
+    interp_map = griddata(points, data, (ref_grid_ra, ref_grid_dec))
     return interp_map

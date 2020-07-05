@@ -24,5 +24,5 @@ def histograms(sim_data, real_data, nu_list):
         plt.xlabel('Flux [$\\frac{MJy}{Sr}$]')
         plt.ylabel('Nsources')
         plt.legend()
-        plt.savefig('validation histograms %s.png' % (nu_list[i]))
+        plt.savefig('../Test_Cases/validation histograms %s.png' % (nu_list[i]))
         plt.clf()
