@@ -28,6 +28,8 @@ beta_name = '../Data/COM_CompMap_Dust-GNILC-Model-Spectral-Index_2048_R2.01.fits
 
 filenames = [tau_name, temp_name, beta_name]
 hdul = fits.open('../Data/macs2129_PSW_6_8.2.fits')
+hdul = fits.open('/data/butler/SPIRE/hls_clusters/rbs1639_PSW_6_8.2.fits')
+
 # hdul = fits.open('/data/butler/SPIRE/hermes_clusters/rxj1347_PSW_nr_1.fits')
 # calfac  = (pi/180.0)**2 * (1/3600.0)**2 * (pi / (4.0 * log(2.0))) * (1e6) * 18**2
 
@@ -121,9 +123,10 @@ plt.savefig('../Test_Cases/CIB_model.png')
 plt.clf()
 #
 sim = []
-for i in range(len(sim_maps)):
-    sim.append(sim_maps[i] + cib_maps[i])
-    diff_map = real_maps[i] - sim[i]
-    print(np.mean(diff_map), i)
+# for i in range(len(sim_maps)):
+#     sim.append(sim_maps[i] + cib_maps[i])
+#     diff_map = real_maps[i] - sim[i]
+#     print(np.mean(diff_map), i)
 
 histograms(sim_maps, real_maps, nu)
+# histograms(sim, real_maps, nu)

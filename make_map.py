@@ -41,7 +41,8 @@ def create_map(filenames, ref_head, ref_pixsize, ref_mapsize, center, nu):
 
     interped_map = interp_back_to_ref(I_map, ra, dec, ref_head, ref_mapsize)
 
-    return interped_map
+    # return interped_map
+    return I_map
 
 def read_in_fits(filename, center, ref_head, ref_pixsize=8, ref_mapsize=260):
 
@@ -77,7 +78,7 @@ def read_in_fits(filename, center, ref_head, ref_pixsize=8, ref_mapsize=260):
 
 
     x  = np.linspace(0, ref_mapsize[0],   npixxside)
-    y = np.linspace(0, ref_mapsize[1],   npixyside)
+    y  = np.linspace(0, ref_mapsize[1],   npixyside)
 
     X, Y = np.meshgrid(x, y)
     w = world(ref_head)
