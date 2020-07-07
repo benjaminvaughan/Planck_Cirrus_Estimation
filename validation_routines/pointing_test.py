@@ -29,8 +29,8 @@ hdul = fits.open('../Data/macs2129_PSW_6_8.2.fits')
 # hdul = fits.open('/data/butler/SPIRE/hermes_clusters/rxj1347_PSW_nr_1.fits')
 calfac  = (pi/180.0)**2 * (1/3600.0)**2 * (pi / (4.0 * log(2.0))) * (1e6) * 18**2
 
-# center = [206.9, -11.45]
 center = [hdul[1].header['crval1'], hdul[1].header['crval2']]
+print(center)
 map = hdul[1].data
 size = map.shape
 ref_head = hdul[1].header
@@ -47,9 +47,9 @@ interped_map = interp_back_to_ref(CIB_map, ra, dec, ref_head, size)
 
 fig, axs = plt.subplots(1, 2)
 
-im1 = axs[0].imshow(map - np.mean(map[np.isnan(map) == False]), origin='lower')
+im1 = axs[0].imshow(map, origin='lower')
 fig.colorbar(im1, ax=axs[0])
-im2 = axs[1].imshow(PLW_I_map - np.mean(PLW_I_map), origin='lower')
+im2 = axs[1].imshow(PLW_I_map, origin='lower')
 fig.colorbar(im2, ax=axs[1])
 # im3 = axs[2].imshow(interped_map, origin='lower', vmax=0.032)
 # fig.colorbar(im3, ax=axs[2])
@@ -82,9 +82,9 @@ interped_map = interp_back_to_ref(CIB_map, ra, dec, ref_head, size)
 
 fig, axs = plt.subplots(1, 2)
 
-im1 = axs[0].imshow(map - np.mean(map[np.isnan(map) == False]), origin='lower')
+im1 = axs[0].imshow(map, origin='lower')
 fig.colorbar(im1, ax=axs[0])
-im2 = axs[1].imshow(PLW_I_map - np.mean(PLW_I_map), origin='lower')
+im2 = axs[1].imshow(PLW_I_map, origin='lower')
 fig.colorbar(im2, ax=axs[1])
 # im3 = axs[2].imshow(interped_map, origin='lower', vmax=0.032)
 # fig.colorbar(im3, ax=axs[2])
@@ -120,9 +120,9 @@ interped_map = interp_back_to_ref(CIB_map, ra, dec, ref_head, size)
 
 fig, axs = plt.subplots(1, 2)
 
-im1 = axs[0].imshow(map - np.mean(map[np.isnan(map) == False]), origin='lower')
+im1 = axs[0].imshow(map, origin='lower')
 fig.colorbar(im1, ax=axs[0])
-im2 = axs[1].imshow(PLW_I_map - np.mean(PLW_I_map), origin='lower')
+im2 = axs[1].imshow(PLW_I_map, origin='lower')
 fig.colorbar(im2, ax=axs[1])
 # im3 = axs[2].imshow(interped_map, origin='lower', vmax=0.032)
 # fig.colorbar(im3, ax=axs[2])

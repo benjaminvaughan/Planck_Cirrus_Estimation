@@ -28,6 +28,7 @@ def blackbody_func(T, nu):
 
 def calc_intensity(beta, tau,T, nu):
     nu_const = nu / 353e9 #GHz
+    print(nu_const)
     power = np.asarray([nu_const**bi for bi in beta])
     bb = blackbody_func(T, nu)
     I = np.multiply(tau, bb)
