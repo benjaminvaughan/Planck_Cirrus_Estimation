@@ -2,7 +2,9 @@
 # NAME : make_map.py
 # DATE STARTED : June 25, 2020
 # AUTHORS : Benjamin Vaughan
-# PURPOSE :
+# PURPOSE : the purpose of this program is to make a map of Cirrus Emission using
+# the results of the Dust Fitting Analysis done by the Planck Team on their 2015
+# GNILC-Dust models.
 # EXPLANATION :
 # CALLING SEQUENCE :
 # INPUTS :
@@ -14,7 +16,6 @@
 from astropy.io import fits
 import numpy as np
 from math_functions import *
-from math import *
 from scipy.interpolate import griddata
 from astropy.wcs import WCS as world
 from astropy.wcs.utils import pixel_to_skycoord, skycoord_to_pixel
@@ -22,14 +23,23 @@ import matplotlib.pyplot as plt
 from astropy_healpix import HEALPix
 from astropy import units as u
 from astropy.coordinates import SkyCoord
-from astropy.convolution import convolve_fft as convolve
-from astropy.convolution import Gaussian2DKernel
 from scipy.interpolate import griddata
-from astropy.wcs import WCS as world
 from astropy.wcs.utils import pixel_to_skycoord, skycoord_to_pixel
 
 def create_map(filenames, ref_head, ref_pixsize, ref_mapsize, center, nu):
-    I_to_MJy = 1e20
+    '''
+    Inputs : filenames (str array) - the paths to and the filenames of the component maps in order of Tau, Temp, Beta (see example.py)
+             ref_head  (astropy.header) - the header for the reference map to interpolate onto
+             ref_pixsize (float) - the pixel size of the reference map
+             ref_mapsize (int array) - a set of the values for the length of each axes of the map
+             center (float array) - a set of the values for the center of the field of interest
+    Outputs : Interped_map (float array) - an array of fluxes interpolated onto the reference map's grid.
+              ragrd (float array) - an array of the Right Ascension values used in the interpolation
+              decgrd (float array) - an array of the Declination values used in the interpolation
+    Notes : The Planck model has an offset in intensity due to the fact that in Planck Collaborationet al. 2016 correlated their
+            fit to regions where H1 is present and therefore had an offset in their fit. For more details see their paper.
+    '''
+    I_to_MJy = 1e20 #converts from standard units of Intensity to MJy
     param_values = [] #Beta = 2, Temperature = 1, Tau = 0
     for f in filenames:
         data, pixsize, x_side, y_side, ra, dec = read_in_fits(f, center, ref_head, ref_pixsize, ref_mapsize)
@@ -39,16 +49,27 @@ def create_map(filenames, ref_head, ref_pixsize, ref_mapsize, center, nu):
 
     I_map = np.reshape(I, (x_side, y_side)) * I_to_MJy
 
-    interped_map = interp_back_to_ref(I_map, ra, dec, ref_head, ref_mapsize)
+    interped_map, ragrd, decgrd = interp_back_to_ref(I_map, ra, dec, ref_head, ref_mapsize)
 
-    plt.imshow(interped_map)
-    plt.savefig('../Test_Cases/test%scenter.png' % (center))
-    plt.clf()
 
-    return I_map
+    return interped_map, ragrd, decgrd
     # return interped_map
 
 def read_in_fits(filename, center, ref_head, ref_pixsize=8, ref_mapsize=260):
+    '''
+    Purpose : This function reads in the fits files for the components and parses them so that we are left with data only for our field.
+    Inputs: filename (str) - the singular filename for a component used in the MBB fit
+            center (float array) - center of the field of interest
+            ref_head (Astropy.header) - header for the reference field
+            ref_pixsize - pixel size of the reference map
+            ref_mapsize - mapsize of the reference map
+    Outputs: map (float array) - an array of flux values at the given field
+             pixsize (float) - pixel size of the uninterpolated component maps
+             x_side (int) - the length of the x-axis of the map
+             y_side (int) - the length of the y-axis of the map
+             RA_grid (float array) - grid of the Right Ascension values used to pull out components
+             DEC_grid (float array) - grid of the Declination values used to pull out components
+    '''
 
     hdul = fits.open(filename)
     head = hdul[1].header
@@ -65,7 +86,6 @@ def read_in_fits(filename, center, ref_head, ref_pixsize=8, ref_mapsize=260):
 
     else:
         data = hdul[1].data.field(0)
-        print(head)
     nside = head['NSIDE']
     order = head['ORDERING']
     hdul.close()
@@ -106,6 +126,14 @@ def read_in_fits(filename, center, ref_head, ref_pixsize=8, ref_mapsize=260):
 
 
 def interp_back_to_ref(img, ra, dec, ref_head, ref_shape):
+    '''
+    Purpose: Perform the inperolation of the completed Planck Map to a reference header
+    Inputs: img - the Planck flux map
+            ra  - grid of the Right Ascension values used to create the Planck Map
+            dec - grid of the Decliation values used to create the Planck Map
+            ref_head - the reference header for the interpolatino grid
+            ref_shape - the shape of the interpolation grid
+    '''
 
     map_size = img.shape
 
@@ -121,62 +149,4 @@ def interp_back_to_ref(img, ra, dec, ref_head, ref_shape):
     #do the interpolation
     interp_map = griddata(points, data, (ref_grid_ra, ref_grid_dec))
     final_map = np.swapaxes(interp_map, 0, 1)
-    return final_map
-
-
-def get_fwhm(center, ref_pixsize=8, ref_mapsize=260):
-    hdul_fwhm = fits.open('../Data/COM_CompMap_Dust-GNILC-Beam-FWHM_0128_R2.00.fits')
-
-    header = hdul_fwhm[1].header
-    nside = header['NSIDE']
-    order = header['ORDERING']
-
-
-    data = hdul_fwhm[1].data.field(0)
-    hp = HEALPix(nside=nside, order=order, frame='galactic')
-
-    pixsize = hp.pixel_resolution.to(u.arcsecond).value #steradian to square arcseconds  per pixel
-
-
-    map_arc_s = ref_mapsize * ref_pixsize #map size in arcseconds
-    npixside = ceil(map_arc_s / pixsize) #convert to map size in pixels for nu = 353 map.
-
-
-    RA = np.linspace(center[0] - map_arc_s / 3600., center[0] + map_arc_s / 3600., npixside) * u.deg
-    DEC = np.linspace(center[1] - map_arc_s / 3600. , center[1] + map_arc_s / 3600., npixside ) * u.deg
-
-    #this creates the grid of RA / DEC values
-    RA_grid, DEC_grid = np.meshgrid(RA, DEC)
-
-    coords = SkyCoord(RA_grid.ravel(), DEC_grid.ravel(), frame='icrs')
-
-    fwhm_arr = hp.interpolate_bilinear_skycoord(coords, data)
-
-    fwhm = np.mean(fwhm_arr) #will want to use something better for later but this works for now..
-
-    fwhm_pixels = fwhm * 60 / ref_pixsize #to get fwhm in pixels from arcmin since pixsize is arcseconds / pixel
-
-    print(fwhm_pixels)
-    fwhm_arcs = fwhm * 60
-
-    print(fwhm_arcs)
-
-    ###############Currently only using this to get the calfac conversion.
-    bmsigma = fwhm_pixels / sqrt(8 * log(2))
-    retext = round(fwhm_arcs * 5.0 / ref_pixsize)
-    if retext % 2 == 0:
-        retext += 1
-
-
-    beam = Gaussian2DKernel(bmsigma , x_size=retext,y_size=retext, mode='oversample',factor=1)
-    beam_norm = beam.array / np.sum(beam.array)
-
-    calfac  = (pi/180.0)**2 * (1/3600.0)**2 * (pi / (4.0 * log(2.0)))
-
-    plt.imshow(beam_norm)
-    plt.colorbar()
-    plt.savefig('beam')
-    plt.clf()
-
-    to_MJy_Sr = 1 / (calfac * fwhm_arcs**2) #calibration factor based off of FWHM of our beam.
-    return beam_norm, to_MJy_Sr
+    return final_map, ref_grid_ra, ref_grid_dec

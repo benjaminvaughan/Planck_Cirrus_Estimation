@@ -16,6 +16,12 @@ import numpy as np
 from math import *
 
 def blackbody_func(T, nu):
+    '''
+    This is a standard Planck Law
+    Inputs : T (float array) - Temperatures of dust
+             Nu (float) - the frequency of interest
+    Outputs : bb (float array) - an array of results from Planck Law at given T and Nu
+    '''
     k       = 1.3806503e-23           #Boltzmann constant, J/K
     h       = 6.626068e-34            #Planck constant, J s
     c       = 2.99792458e8            #m/s
@@ -27,6 +33,14 @@ def blackbody_func(T, nu):
     return bb
 
 def calc_intensity(beta, tau,T, nu):
+    '''
+    This takes the Planck Law function and does the calculation for the MBB
+    Inputs : beta (float array) - beta parameter for power law of nu dependence at a given pixel
+             tau (float array) - the optical depth at a given pixel
+             T (float array) - the temperature at a given pixel
+             Nu (float) - the frequency of interest
+    Outputs: I_nu (float array) - Intensity of each pixel in SI units
+    '''
     nu_const = nu / 353e9 #GHz
     print(nu_const)
     power = np.asarray([nu_const**bi for bi in beta])

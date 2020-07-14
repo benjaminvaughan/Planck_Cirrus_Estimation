@@ -15,117 +15,95 @@ import sys
 from astropy.io import fits
 sys.path.append('../')
 from make_map import *
-from histograms import *
+from utilities import *
 import numpy as np
 from astropy.wcs.utils import pixel_to_skycoord, skycoord_to_pixel
 from astropy.wcs import WCS as world
+from utilities import make_header
+from astropy import units as u
 
-tau_name = '../Data/COM_CompMap_Dust-GNILC-Model-Opacity_2048_R2.01.fits'
-temp_name = '../Data/COM_CompMap_Dust-GNILC-Model-Temperature_2048_R2.01.fits'
-beta_name = '../Data/COM_CompMap_Dust-GNILC-Model-Spectral-Index_2048_R2.01.fits'
+def point(hdul, name):
 
-filenames = [tau_name, temp_name, beta_name]
-hdul = fits.open('../Data/macs2129_PSW_6_8.2.fits')
-# hdul = fits.open('/data/butler/SPIRE/hermes_clusters/rxj1347_PSW_nr_1.fits')
-calfac  = (pi/180.0)**2 * (1/3600.0)**2 * (pi / (4.0 * log(2.0))) * (1e6) * 18**2
+    tau_name = '../Data/COM_CompMap_Dust-GNILC-Model-Opacity_2048_R2.01.fits'
+    temp_name = '../Data/COM_CompMap_Dust-GNILC-Model-Temperature_2048_R2.01.fits'
+    beta_name = '../Data/COM_CompMap_Dust-GNILC-Model-Spectral-Index_2048_R2.01.fits'
 
-center = [hdul[1].header['crval1'], hdul[1].header['crval2']]
-print(center)
-map = hdul[1].data
-size = map.shape
-ref_head = hdul[1].header
+    filenames = [tau_name, temp_name, beta_name]
 
-x = np.arange(0, size[0])
-y = np.arange(0, size[1])
-X, Y = np.meshgrid(x, y)
+    center = [hdul[1].header['crval1'], hdul[1].header['crval2']]
+    map = hdul[1].data
+    size = map.shape
+    ref_head = hdul[1].header
 
-PLW_I_map =  create_map(filenames, ref_head, 6, ref_mapsize=size, center=center, nu=1200e9) * calfac
+    x = np.arange(0, size[0])
+    y = np.arange(0, size[1])
+    X, Y = np.meshgrid(x, y)
 
-cib_data, pixsize, x_side, y_side, ra, dec = read_in_fits('../Data/COM_CompMap_CIB-GNILC-F857_2048_R2.00.fits', center, ref_head, 6, size)
-CIB_map = np.reshape(cib_data, (x_side, y_side)) * calfac
-interped_map = interp_back_to_ref(CIB_map, ra, dec, ref_head, size)
+    PSW_I_map, ra, dec =  create_map(filenames, ref_head, 6, ref_mapsize=size, center=center, nu=1200e9)
+    ra  = ra[:,0]
+    dec = dec[0, :]
+    mid_ra = np.median(ra)
+    mid_dec = np.median(dec)
+    PSW_header = make_header(6, size, mid_ra, mid_dec)
 
-fig, axs = plt.subplots(1, 2)
+    hdu = fits.PrimaryHDU(PSW_I_map, PSW_header)
+    hdul = fits.HDUList([hdu])
+    hdul.writeto('../Test_Cases/new_fits_files/Planck_250_' + name +'.fits', overwrite=True)
 
-im1 = axs[0].imshow(map, origin='lower')
-fig.colorbar(im1, ax=axs[0])
-im2 = axs[1].imshow(PLW_I_map, origin='lower')
-fig.colorbar(im2, ax=axs[1])
-# im3 = axs[2].imshow(interped_map, origin='lower', vmax=0.032)
-# fig.colorbar(im3, ax=axs[2])
-plt.tight_layout()
-plt.savefig('../Test_Cases/cirrus_test_macs2129.png')
-plt.clf()
+    min_dec = np.min(dec)
+    max_dec = np.max(dec)
+    min_ra  = np.min(ra)
+    max_ra  = np.max(ra)
 
-
-
-
-hdul = fits.open('/data/butler/SPIRE/hls_clusters/rbs1639_PSW_6_8.2.fits')
-
-calfac  = (pi/180.0)**2 * (1/3600.0)**2 * (pi / (4.0 * log(2.0))) * (1e6) * 18**2
-
-# center = [206.9, -11.45]
-center = [hdul[1].header['crval1'], hdul[1].header['crval2']]
-map = hdul[1].data
-size = map.shape
-ref_head = hdul[1].header
-
-x = np.arange(0, size[0])
-y = np.arange(0, size[1])
-X, Y = np.meshgrid(x, y)
-
-PLW_I_map =  create_map(filenames, ref_head, 6, ref_mapsize=size, center=center, nu=1200e9) * calfac
-
-cib_data, pixsize, x_side, y_side, ra, dec = read_in_fits('../Data/COM_CompMap_CIB-GNILC-F857_2048_R2.00.fits', center, ref_head, 6, size)
-CIB_map = np.reshape(cib_data, (x_side, y_side)) * calfac
-interped_map = interp_back_to_ref(CIB_map, ra, dec, ref_head, size)
-
-fig, axs = plt.subplots(1, 2)
-
-im1 = axs[0].imshow(map, origin='lower')
-fig.colorbar(im1, ax=axs[0])
-im2 = axs[1].imshow(PLW_I_map, origin='lower')
-fig.colorbar(im2, ax=axs[1])
-# im3 = axs[2].imshow(interped_map, origin='lower', vmax=0.032)
-# fig.colorbar(im3, ax=axs[2])
-plt.tight_layout()
-plt.savefig('../Test_Cases/cirrus_test_rbs1639.png')
-plt.clf()
+    plt.imshow(PSW_I_map, origin='lower', extent=[min_dec, max_dec, min_ra, max_ra])#, clim=(1.8916812, 8.812404))
+    plt.colorbar()
+    plt.savefig('../Test_Cases/cirrus_test_' + name + '.png')
+    plt.clf()
 
 
+if __name__ == '__main__':
+    DataDir = '../Test_Cases/new_fits_files/'
+    hdul = fits.open('../Data/macs2129_PSW_6_8.2.fits')
 
+    point(hdul, 'MACS2129')
 
+    data = hdul[1].data
+    hdu = fits.PrimaryHDU(data, hdul[1].header)
+    hdul = fits.HDUList([hdu])
+    hdul.writeto(DataDir + 'MACS2129.fits', overwrite=True)
 
+    hdul = fits.open('/data/butler/SPIRE/hls_clusters/rbs1639_PSW_6_8.2.fits')
 
+    point(hdul, 'RBS1639')
 
-hdul = fits.open('/data/butler/SPIRE/hls_clusters/macs0451_PSW_6_8.2.fits')
+    data = hdul[1].data
+    hdu = fits.PrimaryHDU(data, hdul[1].header)
+    hdul = fits.HDUList([hdu])
+    hdul.writeto(DataDir + 'RBS1639.fits', overwrite=True)
 
-calfac  = (pi/180.0)**2 * (1/3600.0)**2 * (pi / (4.0 * log(2.0))) * (1e6) * 18**2
+    hdul = fits.open('/data/butler/SPIRE/hermes_clusters/rxj1347_PSW_nr_1.fits')
 
-# center = [206.9, -11.45]
-center = [hdul[1].header['crval1'], hdul[1].header['crval2']]
-map = hdul[1].data
-size = map.shape
-ref_head = hdul[1].header
+    point(hdul, 'RXJ1347')
 
-x = np.arange(0, size[0])
-y = np.arange(0, size[1])
-X, Y = np.meshgrid(x, y)
+    data = hdul[1].data
+    hdu = fits.PrimaryHDU(data, hdul[1].header)
+    hdul = fits.HDUList([hdu])
+    hdul.writeto(DataDir + 'RXJ1347.fits', overwrite=True)
 
-PLW_I_map =  create_map(filenames, ref_head, 6, ref_mapsize=size, center=center, nu=1200e9) * calfac
+    hdul = fits.open('/data/butler/SPIRE/hermes_clusters/ms1054_PSW_nr_1.fits')
 
-cib_data, pixsize, x_side, y_side, ra, dec = read_in_fits('../Data/COM_CompMap_CIB-GNILC-F857_2048_R2.00.fits', center, ref_head, 6, size)
-CIB_map = np.reshape(cib_data, (x_side, y_side)) * calfac
-interped_map = interp_back_to_ref(CIB_map, ra, dec, ref_head, size)
+    point(hdul, 'MS1054')
 
-fig, axs = plt.subplots(1, 2)
+    data = hdul[1].data
+    hdu = fits.PrimaryHDU(data, hdul[1].header)
+    hdul = fits.HDUList([hdu])
+    hdul.writeto(DataDir + 'MS1054.fits', overwrite=True)
 
-im1 = axs[0].imshow(map, origin='lower')
-fig.colorbar(im1, ax=axs[0])
-im2 = axs[1].imshow(PLW_I_map, origin='lower')
-fig.colorbar(im2, ax=axs[1])
-# im3 = axs[2].imshow(interped_map, origin='lower', vmax=0.032)
-# fig.colorbar(im3, ax=axs[2])
-plt.tight_layout()
-plt.savefig('../Test_Cases/cirrus_test_macs0451.png')
-plt.clf()
+    hdul = fits.open('/data/butler/SPIRE/hermes_clusters/a0370_PSW_nr_1.fits')
+
+    point(hdul, 'A0370')
+
+    data = hdul[1].data
+    hdu = fits.PrimaryHDU(data, hdul[1].header)
+    hdul = fits.HDUList([hdu])
+    hdul.writeto(DataDir + 'A0370.fits', overwrite=True)
