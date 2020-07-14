@@ -2,8 +2,7 @@
 This is a program that is meant to simulate the Cirrus emission at a specified field using
 parameters from fitting to the Planck GNILC-Dust-Maps in Planck 2015.
 
-Note that due to the complicated fitting procedure used in Planck 2015 the maps created using the MBB have
-an offset from the fact that in their analysis they correlated the fit with regions of H1.
+The maps havean offset from the fact that in Planck 2015 they correlated the fit for the Modified BlackBody with regions of H1.
 
 Some References:
 
