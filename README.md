@@ -13,4 +13,4 @@ https://www.aanda.org/articles/aa/full_html/2016/12/aa29022-16/aa29022-16.html
 
 https://wiki.cosmos.esa.int/planck-legacy-archive/index.php/Foreground_maps#GNILC_thermal_dust_maps
 
-https://astropy-healpix.readthedocs.io/en/latest/
+https://ui.adsabs.harvard.edu/abs/2005ApJ...622..759G/abstract
