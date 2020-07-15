@@ -26,7 +26,7 @@ from astropy.coordinates import SkyCoord
 from scipy.interpolate import griddata
 from astropy.wcs.utils import pixel_to_skycoord, skycoord_to_pixel
 
-def create_map(filenames, ref_head, ref_pixsize, ref_mapsize, center, nu):
+def create_map(ref_head, nu):
     '''
     Inputs : filenames (str array) - the paths to and the filenames of the component maps in order of Tau, Temp, Beta (see example.py)
              ref_head  (astropy.header) - the header for the reference map to interpolate onto
@@ -39,6 +39,25 @@ def create_map(filenames, ref_head, ref_pixsize, ref_mapsize, center, nu):
     Notes : The Planck model has an offset in intensity due to the fact that in Planck Collaborationet al. 2016 correlated their
             fit to regions where H1 is present and therefore had an offset in their fit. For more details see their paper.
     '''
+
+    tau_name = '../Data/COM_CompMap_Dust-GNILC-Model-Opacity_2048_R2.01.fits'
+    temp_name = '../Data/COM_CompMap_Dust-GNILC-Model-Temperature_2048_R2.01.fits'
+    beta_name = '../Data/COM_CompMap_Dust-GNILC-Model-Spectral-Index_2048_R2.01.fits'
+
+    filenames = [tau_name, temp_name, beta_name]
+
+
+    if 'CD1_1' in ref_head.keys():
+        ref_pixsize = 3600 *  np.mean([abs(ref_head['CD1_1'] + ref_head['CD2_1']), abs(ref_head['CD2_1'] + ref_head['CD2_2'])])
+    elif 'CDELT1' in ref_head.keys():
+        ref_head['cd_1'] = ref_head['CDELT1']
+        ref_head['cd_2'] = 0
+        ref_head['cd_1'] = 0
+        ref_head['cd_2'] = ref_head['CDELT2']
+        ref_pixsize = 3600 *  np.mean([abs(ref_head['CD1_1'] + ref_head['CD2_1']), abs(ref_head['CD2_1'] + ref_head['CD2_2'])])
+    ref_mapsize = [ref_head['NAXIS2'], ref_head['NAXIS1']]
+    center = [ref_head['CRVAL1'], ref_head['CRVAL2']]
+
     I_to_MJy = 1e20 #converts from standard units of Intensity to MJy
     param_values = [] #Beta = 2, Temperature = 1, Tau = 0
     for f in filenames:
