@@ -42,7 +42,6 @@ def calc_intensity(beta, tau,T, nu):
     Outputs: I_nu (float array) - Intensity of each pixel in SI units
     '''
     nu_const = nu / 353e9 #GHz
-    print(nu_const)
     power = np.asarray([nu_const**bi for bi in beta])
     bb = blackbody_func(T, nu)
     I = np.multiply(tau, bb)

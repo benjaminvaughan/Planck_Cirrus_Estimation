@@ -28,7 +28,6 @@ def make_header(pixsize, naxis, ra, dec):
     Outputs : Header - a fits header object containing astrometry data
     '''
     pixsize = pixsize / 3600
-    print(pixsize)
     cd1_1 = -pixsize
     cd1_2 = 0
     cd2_1 = 0
@@ -37,7 +36,6 @@ def make_header(pixsize, naxis, ra, dec):
     crpix2 = naxis[1] / 2 + 1
     crval1 = ra
     crval2 = dec
-    print(crval1, crval2)
     header = fits.Header()
     header.set('NAXIS', int(2))
     header.set('NAXIS1', naxis[0])

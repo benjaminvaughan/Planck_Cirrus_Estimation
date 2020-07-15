@@ -34,8 +34,7 @@ ra  = ra[:,0]
 dec = dec[0, :]
 mid_ra = np.median(ra)
 mid_dec = np.median(dec)
-PSW_header = make_header(pixsize, PSW_I_map, mid_ra, mid_dec)
-
+PSW_header = make_header(pixsize, PSW_I_map.shape, mid_ra, mid_dec)
 hdu = fits.PrimaryHDU(PSW_I_map, PSW_header)
 hdul = fits.HDUList([hdu])
 hdul.writeto('../Test_Cases/fits_files/Planck_250_' + name +'.fits', overwrite=True)

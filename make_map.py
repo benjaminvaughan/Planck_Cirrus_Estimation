@@ -109,20 +109,23 @@ def read_in_fits(filename, center, ref_head, ref_pixsize=8, ref_mapsize=260):
     order = head['ORDERING']
     hdul.close()
 
+
+
     #Galactic Coordinate System
     hp = HEALPix(nside=nside, order=order, frame='galactic')
     #create a pixel grid in terms of the nu=353 grid for GNILC to create our intensity maps
     pixsize = hp.pixel_resolution.to(u.arcsecond).value
 
-    map_arc_x = ref_mapsize[0] * ref_pixsize #map size in arcseconds
-    map_arc_y = ref_mapsize[1] * ref_pixsize
+    #* 2 is for boosting the size of the map so to fix edge effects from interpolation
+    map_arc_x = ref_mapsize[0] * 2 * ref_pixsize #map size in arcseconds
+    map_arc_y = ref_mapsize[1] * 2 * ref_pixsize
 
     npixxside = ceil(map_arc_x / pixsize) #convert to map size in pixels for nu = 353 map.
     npixyside = ceil(map_arc_y / pixsize)
 
-
-    x  = np.linspace(0, ref_mapsize[0],   npixxside)
-    y  = np.linspace(0, ref_mapsize[1],   npixyside)
+    #* 2 is for boosting the size of the map so to fix edge effects from interpolation
+    x  = np.linspace(0, ref_mapsize[0] * 2,   npixxside)
+    y  = np.linspace(0, ref_mapsize[1] * 2,   npixyside)
 
     X, Y = np.meshgrid(x, y)
     w = world(ref_head)
