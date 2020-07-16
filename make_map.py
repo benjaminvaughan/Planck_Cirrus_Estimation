@@ -75,7 +75,14 @@ def create_map(ref_head, nu):
 
     I_map = np.reshape(I, (x_side, y_side)) * I_to_MJy
 
-    interped_map, ragrd, decgrd = interp_back_to_ref(I_map, ra, dec, ref_head, ref_mapsize)
+
+    #this fixes the astrometry in the map to account for the oversizing done previously
+    ref_head['naxis1'] = ref_head['naxis1'] / 2
+    ref_head['naxis2'] = ref_head['naxis2'] / 2
+    ref_head['crpix1'] = ref_head['crpix1'] / 2
+    ref_head['crpix2'] = ref_head['crpix2'] / 2
+
+    interped_map, ragrd, decgrd = interp_back_to_ref(I_map, ra, dec, ref_head)
 
 
     return interped_map, ragrd, decgrd
@@ -152,7 +159,7 @@ def read_in_fits(filename, center, ref_head, ref_pixsize=8, ref_mapsize=260):
     return map, pixsize, y_side, x_side, RA_grid, DEC_grid
 
 
-def interp_back_to_ref(img, ra, dec, ref_head, ref_shape):
+def interp_back_to_ref(img, ra, dec, ref_head):
     '''
     Purpose: Perform the inperolation of the completed Planck Map to a reference header
     Inputs: img - the Planck flux map
@@ -162,11 +169,8 @@ def interp_back_to_ref(img, ra, dec, ref_head, ref_shape):
             ref_shape - the shape of the interpolation grid
     '''
 
-    #this fixes the astrometry in the map to account for the oversizing done previously
-    ref_head['naxis1'] = ref_head['naxis1'] / 2
-    ref_head['naxis2'] = ref_head['naxis2'] / 2
-    ref_head['crpix1'] = ref_head['crpix1'] / 2
-    ref_head['crpix2'] = ref_head['crpix2'] / 2
+    ref_shape = [ref_head['naxis2'], ref_head['naxis1']]
+
     map_size = img.shape
 
     # reformat map data and coordinates
