@@ -25,7 +25,7 @@ from astropy import units as u
 from astropy.coordinates import SkyCoord
 from scipy.interpolate import griddata
 from astropy.wcs.utils import pixel_to_skycoord, skycoord_to_pixel
-import config
+import planck_config
 
 def create_map(ref_head, nu):
     '''
@@ -41,9 +41,9 @@ def create_map(ref_head, nu):
             fit to regions where H1 is present and therefore had an offset in their fit. For more details see their paper.
     '''
 
-    tau_name = config.data_dir + 'COM_CompMap_Dust-GNILC-Model-Opacity_2048_R2.01.fits'
-    temp_name = config.data_dir + 'COM_CompMap_Dust-GNILC-Model-Temperature_2048_R2.01.fits'
-    beta_name = config.data_dir + 'COM_CompMap_Dust-GNILC-Model-Spectral-Index_2048_R2.01.fits'
+    tau_name = planck_config.data_dir + 'COM_CompMap_Dust-GNILC-Model-Opacity_2048_R2.01.fits'
+    temp_name = planck_config.data_dir + 'COM_CompMap_Dust-GNILC-Model-Temperature_2048_R2.01.fits'
+    beta_name = planck_config.data_dir + 'COM_CompMap_Dust-GNILC-Model-Spectral-Index_2048_R2.01.fits'
 
     filenames = [tau_name, temp_name, beta_name]
 
@@ -51,7 +51,7 @@ def create_map(ref_head, nu):
     if 'CD1_1' in ref_head.keys():
         ref_pixsize = 3600 *  np.mean([abs(ref_head['CD1_1'] + ref_head['CD2_1']), abs(ref_head['CD2_1'] + ref_head['CD2_2'])])
     elif 'CDELT1' in ref_head.keys():
-        ref_head['CD1_1'] = ref_head['CDELT1']
+        ref_head['CD1_1'] = - 1 * ref_head['CDELT1']
         ref_head['CD1_2'] = 0
         ref_head['CD2_1'] = 0
         ref_head['CD2_2'] = ref_head['CDELT2']
