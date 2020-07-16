@@ -29,21 +29,14 @@ pixsize = 3600 *  np.mean([abs(ref_head['CD1_1'] + ref_head['CD2_1']), abs(ref_h
 
 PSW_I_map, ra, dec =  create_map(ref_head, nu=1200e9)
 print(np.sum(np.isnan(PSW_I_map)))
-ra  = ra[:,0]
-dec = dec[0, :]
-mid_ra = np.median(ra)
-mid_dec = np.median(dec)
-PSW_header = make_header(pixsize, PSW_I_map.shape, mid_ra, mid_dec)
-hdu = fits.PrimaryHDU(PSW_I_map, PSW_header)
+
+hdu = fits.PrimaryHDU(PSW_I_map, ref_head)
 hdul = fits.HDUList([hdu])
 hdul.writeto('../Test_Cases/fits_files/Planck_250_' + name +'.fits', overwrite=True)
 
-min_dec = np.min(dec)
-max_dec = np.max(dec)
-min_ra  = np.min(ra)
-max_ra  = np.max(ra)
 
-plt.imshow(PSW_I_map, origin='lower', extent=[min_dec, max_dec, min_ra, max_ra])#, clim=(1.8916812, 8.812404))
+
+plt.imshow(PSW_I_map, origin='lower')#, clim=(1.8916812, 8.812404))
 plt.colorbar()
 plt.savefig('../Test_Cases/' + name + '.png')
 plt.clf()
