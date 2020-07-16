@@ -50,19 +50,25 @@ def create_map(ref_head, nu):
     if 'CD1_1' in ref_head.keys():
         ref_pixsize = 3600 *  np.mean([abs(ref_head['CD1_1'] + ref_head['CD2_1']), abs(ref_head['CD2_1'] + ref_head['CD2_2'])])
     elif 'CDELT1' in ref_head.keys():
-        ref_head['cd_1'] = ref_head['CDELT1']
-        ref_head['cd_2'] = 0
-        ref_head['cd_1'] = 0
-        ref_head['cd_2'] = ref_head['CDELT2']
+        ref_head['CD1_1'] = ref_head['CDELT1']
+        ref_head['CD1_2'] = 0
+        ref_head['CD2_1'] = 0
+        ref_head['CD2_2'] = ref_head['CDELT2']
         ref_pixsize = 3600 *  np.mean([abs(ref_head['CD1_1'] + ref_head['CD2_1']), abs(ref_head['CD2_1'] + ref_head['CD2_2'])])
     ref_mapsize = [ref_head['NAXIS2'], ref_head['NAXIS1']]
     center = [ref_head['CRVAL1'], ref_head['CRVAL2']]
+
+    #this is to oversize the map so that the data has a larger area than the interpolating grid to reduce edge effects
+    ref_head['naxis1'] = ref_head['naxis1'] * 2
+    ref_head['naxis2'] = ref_head['naxis2'] * 2
+    ref_head['crpix1'] = ref_head['crpix1'] * 2
+    ref_head['crpix2'] = ref_head['crpix2'] * 2
+
 
     I_to_MJy = 1e20 #converts from standard units of Intensity to MJy
     param_values = [] #Beta = 2, Temperature = 1, Tau = 0
     for f in filenames:
         data, pixsize, x_side, y_side, ra, dec = read_in_fits(f, center, ref_head, ref_pixsize, ref_mapsize)
-        side = int(sqrt(len(data)))
         param_values.append(data)
     I = calc_intensity(param_values[2], param_values[0], param_values[1], nu)
 
@@ -109,21 +115,19 @@ def read_in_fits(filename, center, ref_head, ref_pixsize=8, ref_mapsize=260):
     order = head['ORDERING']
     hdul.close()
 
-
-
     #Galactic Coordinate System
     hp = HEALPix(nside=nside, order=order, frame='galactic')
     #create a pixel grid in terms of the nu=353 grid for GNILC to create our intensity maps
     pixsize = hp.pixel_resolution.to(u.arcsecond).value
 
-    #* 2 is for boosting the size of the map so to fix edge effects from interpolation
+    #* 10 is for boosting the size of the map so to fix edge effects from interpolation
     map_arc_x = ref_mapsize[0] * 2 * ref_pixsize #map size in arcseconds
     map_arc_y = ref_mapsize[1] * 2 * ref_pixsize
 
     npixxside = ceil(map_arc_x / pixsize) #convert to map size in pixels for nu = 353 map.
     npixyside = ceil(map_arc_y / pixsize)
 
-    #* 2 is for boosting the size of the map so to fix edge effects from interpolation
+    #* 10 is for boosting the size of the map so to fix edge effects from interpolation
     x  = np.linspace(0, ref_mapsize[0] * 2,   npixxside)
     y  = np.linspace(0, ref_mapsize[1] * 2,   npixyside)
 
@@ -157,6 +161,11 @@ def interp_back_to_ref(img, ra, dec, ref_head, ref_shape):
             ref_shape - the shape of the interpolation grid
     '''
 
+    #this fixes the astrometry in the map to account for the oversizing done previously
+    ref_head['naxis1'] = ref_head['naxis1'] / 2
+    ref_head['naxis2'] = ref_head['naxis2'] / 2
+    ref_head['crpix1'] = ref_head['crpix1'] / 2
+    ref_head['crpix2'] = ref_head['crpix2'] / 2
     map_size = img.shape
 
     # reformat map data and coordinates
@@ -169,6 +178,6 @@ def interp_back_to_ref(img, ra, dec, ref_head, ref_shape):
     ref_grid_ra, ref_grid_dec = ref_w.wcs_pix2world(ref_grid_x, ref_grid_y, 0)
 
     #do the interpolation
-    interp_map = griddata(points, data, (ref_grid_ra, ref_grid_dec))
+    interp_map = griddata(points, data, (ref_grid_ra, ref_grid_dec), method='linear')
     final_map = np.swapaxes(interp_map, 0, 1)
     return final_map, ref_grid_ra, ref_grid_dec

@@ -39,7 +39,7 @@ def point(hdul, name):
     y = np.arange(0, size[1])
     X, Y = np.meshgrid(x, y)
 
-    PSW_I_map, ra, dec =  create_map(filenames, ref_head, 6, ref_mapsize=size, center=center, nu=1200e9)
+    PSW_I_map, ra, dec =  create_map(filenames, ref_head, 6, ref_mapsize=size, center=center, nu=857e9)
     ra  = ra[:,0]
     dec = dec[0, :]
     mid_ra = np.median(ra)
@@ -62,6 +62,7 @@ def point(hdul, name):
 
 
 if __name__ == '__main__':
+
     DataDir = '../Test_Cases/new_fits_files/'
     hdul = fits.open('../Data/macs2129_PSW_6_8.2.fits')
 

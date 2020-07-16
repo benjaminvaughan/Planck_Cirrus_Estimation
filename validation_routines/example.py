@@ -23,13 +23,12 @@ from astropy.wcs import WCS as world
 
 #this is a reference image
 hdul = fits.open('/data/butler/SPIRE/hermes_clusters/ms1054_PSW_nr_1.fits')
-
 name = 'ms1054'
 ref_head = hdul[1].header
 pixsize = 3600 *  np.mean([abs(ref_head['CD1_1'] + ref_head['CD2_1']), abs(ref_head['CD2_1'] + ref_head['CD2_2'])])
 
 PSW_I_map, ra, dec =  create_map(ref_head, nu=1200e9)
-# PSW_I_map = np.multiply(PSW_I_map, calfac)
+print(np.sum(np.isnan(PSW_I_map)))
 ra  = ra[:,0]
 dec = dec[0, :]
 mid_ra = np.median(ra)
